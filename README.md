@@ -12,24 +12,57 @@ Inspired by my bestfriend's mac-cordian.
 
 ## Setup
 
+you need Node.js (v18 or higher) and an iPhone on the same wifi as your computer.
+
 ```bash
+git clone https://github.com/tejasnaladala/icordion.git
+cd icordion
 npm install
 npm start
 ```
 
-Open the network URL on your iPhone in Safari, tap to start and allow motion access.
+the server starts and prints something like this:
+
+```
+  > accordion server running (https)
+  > local:   https://localhost:3000
+  > network: https://192.168.1.42:3000
+  > open network url on your iphone
+```
+
+## Playing
+
+1. copy the **network** url (the one with your local ip, not localhost)
+2. open it in **Safari** on your iPhone
+3. you'll get a security warning because of the self-signed cert - tap **Advanced** then **Continue**
+4. tap the screen to start
+5. Safari will ask for **motion sensor access** - tap Allow
+6. hold the phone and tilt/shake it while tapping the keys
+
+the accelerometer acts as the bellows. no movement = no sound. the harder you shake/tilt, the louder and brighter the tone gets.
+
+bass buttons at the bottom play chords (C, F, G, Dm, Am, E).
+
+live accelerometer values show at the bottom of the screen so you can see whats going on
+
+## Notes
+
+- both your phone and computer need to be on the same wifi network
+- the server generates a self-signed SSL cert on first run (stored in `.certs/`). this is needed because iOS requires https for accelerometer access
+- works on any computer that has node - mac, windows, linux
+- only tested on iPhone/Safari. android might work but the accelerometer api is a bit different
 
 ## Files
 
 ```
-├── server.js              # Express server
-└── public/
-    ├── index.html          # CRT-themed accordion UI
-    ├── css/style.css       # Terminal styles
-    └── js/
-        ├── audio-engine.js # Web Audio synthesis
-        ├── bellows.js      # Accelerometer to pressure
-        └── mobile-app.js   # Touch handling + UI
+server.js              - express https server, generates ssl cert
+public/
+  index.html           - the ui
+  css/style.css        - terminal/crt theme
+  js/
+    audio-engine.js    - web audio synthesis, musette tuning
+    bellows.js         - accelerometer to bellows pressure mapping
+    mobile-app.js      - touch handling, key layout, ui wiring
 ```
 
 ## License
