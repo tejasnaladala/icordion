@@ -1,12 +1,11 @@
 // Accordion sound synthesis using Web Audio API
-// Uses multiple detuned oscillators to simulate musette tuning (the characteristic accordion shimmer)
+// Musette tuning with bellows-controlled filter sweep for dramatic expression
 
 const NOTE_NAMES = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
 
 export function midiToNoteName(midi) {
   const octave = Math.floor(midi / 12) - 1;
-  const name = NOTE_NAMES[midi % 12];
-  return `${name}${octave}`;
+  return `${NOTE_NAMES[midi % 12]}${octave}`;
 }
 
 export function midiToFreq(midi) {
@@ -18,8 +17,8 @@ export class AudioEngine {
     this.ctx = null;
     this.masterGain = null;
     this.bellowsGain = null;
+    this.bellowsFilter = null;
     this.compressor = null;
-    this.analyser = null;
     this.activeNotes = new Map();
     this.bellowsPressure = 0;
   }
@@ -27,25 +26,27 @@ export class AudioEngine {
   init() {
     this.ctx = new (window.AudioContext || window.webkitAudioContext)();
 
-    // Signal chain: notes -> bellows gain -> compressor -> master -> analyser -> destination
-    this.compressor = this.ctx.createDynamicsCompressor();
-    this.compressor.threshold.value = -20;
-    this.compressor.knee.value = 10;
-    this.compressor.ratio.value = 4;
+    // Signal chain: notes -> bellowsFilter -> bellowsGain -> compressor -> master -> dest
+    this.bellowsFilter = this.ctx.createBiquadFilter();
+    this.bellowsFilter.type = 'lowpass';
+    this.bellowsFilter.frequency.value = 300; // Nearly muffled when no bellows
+    this.bellowsFilter.Q.value = 1.5;
 
     this.bellowsGain = this.ctx.createGain();
     this.bellowsGain.gain.value = 0;
 
+    this.compressor = this.ctx.createDynamicsCompressor();
+    this.compressor.threshold.value = -15;
+    this.compressor.knee.value = 8;
+    this.compressor.ratio.value = 4;
+
     this.masterGain = this.ctx.createGain();
-    this.masterGain.gain.value = 0.7;
+    this.masterGain.gain.value = 0.85;
 
-    this.analyser = this.ctx.createAnalyser();
-    this.analyser.fftSize = 2048;
-
+    this.bellowsFilter.connect(this.bellowsGain);
     this.bellowsGain.connect(this.compressor);
     this.compressor.connect(this.masterGain);
-    this.masterGain.connect(this.analyser);
-    this.analyser.connect(this.ctx.destination);
+    this.masterGain.connect(this.ctx.destination);
 
     return this;
   }
@@ -64,15 +65,15 @@ export class AudioEngine {
     const noteGain = this.ctx.createGain();
     noteGain.gain.value = 0;
 
-    // Musette tuning: 3 reeds slightly detuned for the characteristic shimmer
-    const detuneCents = type === 'treble' ? [-5, 0, 5] : [-2, 0, 2];
+    // Musette tuning: 3 reeds slightly detuned
+    const detuneCents = type === 'treble' ? [-6, 0, 6] : [-3, 0, 3];
     const oscNodes = [];
 
     for (const detune of detuneCents) {
       const osc = this.ctx.createOscillator();
 
-      // Use periodic wave for a more accordion-like timbre
-      const real = new Float32Array([0, 1, 0.8, 0.5, 0.3, 0.2, 0.15, 0.1, 0.05]);
+      // Rich accordion timbre via custom periodic wave
+      const real = new Float32Array([0, 1, 0.85, 0.6, 0.4, 0.25, 0.18, 0.12, 0.08, 0.05]);
       const imag = new Float32Array(real.length);
       const wave = this.ctx.createPeriodicWave(real, imag);
       osc.setPeriodicWave(wave);
@@ -80,24 +81,16 @@ export class AudioEngine {
       osc.frequency.value = freq;
       osc.detune.value = detune;
 
-      // Tone shaping filter
-      const filter = this.ctx.createBiquadFilter();
-      filter.type = 'lowpass';
-      filter.frequency.value = type === 'treble' ? 4000 : 1800;
-      filter.Q.value = 0.7;
-
-      osc.connect(filter);
-      filter.connect(noteGain);
+      osc.connect(noteGain);
       osc.start();
-
-      oscNodes.push({ osc, filter });
+      oscNodes.push({ osc });
     }
 
-    noteGain.connect(this.bellowsGain);
+    noteGain.connect(this.bellowsFilter);
 
-    // Attack
-    const perOscGain = type === 'treble' ? 0.18 : 0.25;
-    noteGain.gain.setTargetAtTime(perOscGain, this.ctx.currentTime, 0.015);
+    // Attack envelope
+    const gain = type === 'treble' ? 0.2 : 0.28;
+    noteGain.gain.setTargetAtTime(gain, this.ctx.currentTime, 0.012);
 
     this.activeNotes.set(midi, { oscNodes, noteGain, type });
   }
@@ -108,20 +101,18 @@ export class AudioEngine {
 
     const now = this.ctx.currentTime;
     note.noteGain.gain.cancelScheduledValues(now);
-    note.noteGain.gain.setTargetAtTime(0, now, 0.04);
+    note.noteGain.gain.setTargetAtTime(0, now, 0.035);
 
-    // Cleanup after release
     setTimeout(() => {
       note.oscNodes.forEach(({ osc }) => {
         try { osc.stop(); } catch {}
       });
       note.noteGain.disconnect();
-    }, 200);
+    }, 180);
 
     this.activeNotes.delete(midi);
   }
 
-  // Play a chord (array of MIDI notes)
   chordOn(midis, label) {
     const key = `chord_${label}`;
     if (this.activeNotes.has(key)) return;
@@ -139,26 +130,26 @@ export class AudioEngine {
 
   setBellows(pressure) {
     this.bellowsPressure = pressure;
-    if (this.bellowsGain) {
-      this.bellowsGain.gain.setTargetAtTime(
-        Math.pow(pressure, 0.7), // Slight curve for more natural feel
-        this.ctx.currentTime,
-        0.04
-      );
-    }
-  }
+    if (!this.ctx) return;
+    const now = this.ctx.currentTime;
 
-  getAnalyserData() {
-    if (!this.analyser) return null;
-    const data = new Uint8Array(this.analyser.frequencyBinCount);
-    this.analyser.getByteTimeDomainData(data);
-    return data;
-  }
+    // Volume: silence at 0, full at 1
+    this.bellowsGain.gain.setTargetAtTime(
+      Math.pow(pressure, 0.5), // Square root curve = louder faster
+      now, 0.03
+    );
 
-  getFrequencyData() {
-    if (!this.analyser) return null;
-    const data = new Uint8Array(this.analyser.frequencyBinCount);
-    this.analyser.getByteFrequencyData(data);
-    return data;
+    // Filter sweep: 300 Hz (muffled) → 7000 Hz (bright and open)
+    // This is the main audible difference — tone goes from dark to bright
+    const minFreq = 300;
+    const maxFreq = 7000;
+    const filterFreq = minFreq + (maxFreq - minFreq) * Math.pow(pressure, 0.6);
+    this.bellowsFilter.frequency.setTargetAtTime(filterFreq, now, 0.03);
+
+    // Resonance peak increases slightly with pressure for expressiveness
+    this.bellowsFilter.Q.setTargetAtTime(
+      1.0 + pressure * 3.0,
+      now, 0.05
+    );
   }
 }

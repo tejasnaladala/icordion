@@ -2,38 +2,44 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <title>Accordion</title>
+  <title>accordion</title>
   <link rel="stylesheet" href="/css/style.css">
 </head>
-<body class="landing">
-  <div class="landing-container">
-    <div class="logo">
-      <div class="logo-icon">🪗</div>
-      <h1>iPhone Accordion</h1>
-      <p class="subtitle">Turn your phone into a virtual accordion</p>
+<body>
+  <!-- tap to init audio + motion -->
+  <div id="boot" class="boot">
+    <pre>
+> iphone-accordion v1.0
+> inspired by my bestfriend's
+  mac-cordian
+
+> tap anywhere to start_
+    </pre>
+  </div>
+
+  <!-- accordion -->
+  <div id="app" class="app hidden">
+    <div class="header">
+      <span class="title">> accordion</span>
+      <span id="bellows-pct" class="bpct">0%</span>
     </div>
 
-    <div class="mode-cards">
-      <a href="/mobile.html" class="mode-card mobile-card">
-        <div class="card-icon">📱</div>
-        <h2>Play Accordion</h2>
-        <p>Open on your iPhone to play. Uses the accelerometer as bellows and touchscreen as keys.</p>
-      </a>
-
-      <a href="/desktop.html" class="mode-card desktop-card">
-        <div class="card-icon">💻</div>
-        <h2>Dashboard</h2>
-        <p>Open on your laptop to visualize what's being played and coordinate multiple devices.</p>
-      </a>
+    <div class="bellows-bar">
+      <div id="bfill" class="bfill"></div>
     </div>
 
-    <div class="info-section">
-      <h3>Multi-Device Mode</h3>
-      <p>Open the Dashboard on your laptop, then connect your iPhone to play together. Multiple phones can join for ensemble mode!</p>
+    <div class="keys" id="keys"></div>
+
+    <div class="bass" id="bass"></div>
+
+    <div class="footer">
+      <span>> tilt phone = bellows</span>
     </div>
   </div>
+
+  <script type="module" src="/js/mobile-app.js"></script>
 </body>
 </html>
