@@ -52,12 +52,12 @@ export class BellowsController {
 
     const rawJerk = Math.sqrt(dx * dx + dy * dy + dz * dz);
 
-    // Dead zone — ignore sensor noise when phone is still
+    // dead zone - ignore sensor noise when phone is still
     const DEAD_ZONE = 0.4;
     this.jerk = rawJerk < DEAD_ZONE ? 0 : rawJerk;
     this.rawAcc = this.jerk === 0 ? this.rawAcc : { x: acc.x, y: acc.y, z: acc.z };
 
-    // Aggressive mapping — small tilts register clearly
+    // aggressive mapping - small tilts register clearly
     const target = Math.min(1, (this.jerk * this.sensitivity) / 10);
 
     // Fast attack, moderate release

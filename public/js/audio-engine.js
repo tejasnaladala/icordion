@@ -139,8 +139,8 @@ export class AudioEngine {
       now, 0.03
     );
 
-    // Filter sweep: 300 Hz (muffled) → 7000 Hz (bright and open)
-    // This is the main audible difference — tone goes from dark to bright
+    // filter sweep: 300hz (muffled) to 7000hz (bright and open)
+    // this is the main audible difference - tone goes from dark to bright
     const minFreq = 300;
     const maxFreq = 7000;
     const filterFreq = minFreq + (maxFreq - minFreq) * Math.pow(pressure, 0.6);

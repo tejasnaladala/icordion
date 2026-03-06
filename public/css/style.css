@@ -87,7 +87,7 @@ body::after {
   transition: width 0.06s linear;
 }
 
-/* treble keys — flat grid like a keyboard */
+/* treble keys - flat grid like a keyboard */
 .keys {
   flex: 1;
   display: flex;
