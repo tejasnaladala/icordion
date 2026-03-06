@@ -1,4 +1,5 @@
 const express = require('express');
+const http = require('http');
 const https = require('https');
 const fs = require('fs');
 const os = require('os');
@@ -6,23 +7,10 @@ const path = require('path');
 const { execSync } = require('child_process');
 
 const app = express();
-const PORT = process.env.PORT || 3000;
+const HTTP_PORT = 3000;
+const HTTPS_PORT = 3443;
 
 app.use(express.static(path.join(__dirname, 'public')));
-
-// Generate self-signed cert for HTTPS (required by iOS for accelerometer access)
-const CERT_DIR = path.join(__dirname, '.certs');
-const KEY_PATH = path.join(CERT_DIR, 'key.pem');
-const CERT_PATH = path.join(CERT_DIR, 'cert.pem');
-
-if (!fs.existsSync(KEY_PATH)) {
-  fs.mkdirSync(CERT_DIR, { recursive: true });
-  execSync(
-    `openssl req -x509 -newkey rsa:2048 -keyout "${KEY_PATH}" -out "${CERT_PATH}" -days 365 -nodes -subj "/CN=accordion"`,
-    { stdio: 'ignore' }
-  );
-  console.log('  > generated self-signed certificate');
-}
 
 function getLocalIP() {
   const interfaces = os.networkInterfaces();
@@ -36,16 +24,38 @@ function getLocalIP() {
   return 'localhost';
 }
 
-const server = https.createServer({
-  key: fs.readFileSync(KEY_PATH),
-  cert: fs.readFileSync(CERT_PATH),
-}, app);
-
-server.listen(PORT, '0.0.0.0', () => {
+// http always works
+http.createServer(app).listen(HTTP_PORT, '0.0.0.0', () => {
   const ip = getLocalIP();
-  console.log(`\n  > accordion server running (https)`);
-  console.log(`  > local:   https://localhost:${PORT}`);
-  console.log(`  > network: https://${ip}:${PORT}`);
-  console.log(`  > open network url on your iphone`);
-  console.log(`  > tap "Advanced" > "Continue" on the cert warning\n`);
+  console.log(`\n  > icordion running`);
+  console.log(`  > http://localhost:${HTTP_PORT}`);
+  console.log(`  > http://${ip}:${HTTP_PORT}`);
 });
+
+// try to start https too (needed for accelerometer on ios)
+const CERT_DIR = path.join(__dirname, '.certs');
+const KEY_PATH = path.join(CERT_DIR, 'key.pem');
+const CERT_PATH = path.join(CERT_DIR, 'cert.pem');
+
+try {
+  if (!fs.existsSync(KEY_PATH)) {
+    fs.mkdirSync(CERT_DIR, { recursive: true });
+    execSync(
+      `openssl req -x509 -newkey rsa:2048 -keyout "${KEY_PATH}" -out "${CERT_PATH}" -days 365 -nodes -subj "/CN=accordion"`,
+      { stdio: 'ignore' }
+    );
+  }
+
+  https.createServer({
+    key: fs.readFileSync(KEY_PATH),
+    cert: fs.readFileSync(CERT_PATH),
+  }, app).listen(HTTPS_PORT, '0.0.0.0', () => {
+    const ip = getLocalIP();
+    console.log(`  > https://localhost:${HTTPS_PORT}`);
+    console.log(`  > https://${ip}:${HTTPS_PORT}  <-- use this on iphone`);
+    console.log(`  > (tap Advanced > Continue on the cert warning)\n`);
+  });
+} catch (e) {
+  console.log(`  > https not available (openssl missing?) - accelerometer wont work on ios`);
+  console.log(`  > install openssl and restart to fix\n`);
+}

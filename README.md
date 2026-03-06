@@ -21,23 +21,27 @@ npm install
 npm start
 ```
 
-the server starts and prints something like this:
+the server starts and prints something like:
 
 ```
-  > accordion server running (https)
-  > local:   https://localhost:3000
-  > network: https://192.168.1.42:3000
-  > open network url on your iphone
+  > icordion running
+  > http://localhost:3000
+  > http://192.168.1.42:3000
+  > https://localhost:3443
+  > https://192.168.1.42:3443  <-- use this on iphone
 ```
+
+there are two servers - http (port 3000) and https (port 3443). http always works. https is needed on iphone for the accelerometer.
 
 ## Playing
 
-1. copy the **network** url (the one with your local ip, not localhost)
-2. open it in **Safari** on your iPhone
-3. you'll get a security warning because of the self-signed cert - tap **Advanced** then **Continue**
-4. tap the screen to start
-5. Safari will ask for **motion sensor access** - tap Allow
-6. hold the phone and tilt/shake it while tapping the keys
+1. on your iPhone open the **https** network url in Safari (the one on port 3443)
+2. you'll get a cert warning - tap **Advanced** then **Continue**
+3. tap the screen to start
+4. Safari asks for **motion sensor access** - tap Allow
+5. tilt/shake the phone while tapping keys
+
+if you just wanna see the ui without accelerometer (on a laptop or whatever), the http url on port 3000 works fine.
 
 the accelerometer acts as the bellows. no movement = no sound. the harder you shake/tilt, the louder and brighter the tone gets.
 
@@ -48,7 +52,8 @@ live accelerometer values show at the bottom of the screen so you can see whats 
 ## Notes
 
 - both your phone and computer need to be on the same wifi network
-- the server generates a self-signed SSL cert on first run (stored in `.certs/`). this is needed because iOS requires https for accelerometer access
+- the server tries to generate a self-signed SSL cert on first run (needs openssl installed). if openssl isnt available, https wont start but http still works
+- iOS requires https for accelerometer access, thats why we need the cert
 - works on any computer that has node - mac, windows, linux
 - only tested on iPhone/Safari. android might work but the accelerometer api is a bit different
 
