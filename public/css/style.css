@@ -173,10 +173,15 @@ body::after {
   border-color: #1a8a1a;
 }
 
-/* footer */
-.footer {
+/* live accelerometer readout */
+.accel {
   flex-shrink: 0;
-  padding: 6px 2px 2px;
+  padding: 6px 4px 2px;
+  border-top: 1px solid #1a3a1a;
   font-size: 10px;
-  opacity: 0.3;
+  color: #1a6a1a;
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  font-variant-numeric: tabular-nums;
 }

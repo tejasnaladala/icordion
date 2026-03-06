@@ -10,6 +10,8 @@ export class BellowsController {
     this.sensitivity = 5.0;     // Much more sensitive
     this.decay = 0.92;          // Faster decay so you feel the stop
     this.enabled = false;
+    this.rawAcc = { x: 0, y: 0, z: 0 };
+    this.jerk = 0;
     this._boundHandler = this._handleMotion.bind(this);
   }
 
@@ -35,7 +37,8 @@ export class BellowsController {
   _handleMotion(event) {
     if (!this.enabled) return;
 
-    const acc = event.accelerationIncludingGravity;
+    // Use gravity-subtracted acceleration so stationary = 0
+    const acc = event.acceleration || event.accelerationIncludingGravity;
     if (!acc || acc.x === null) return;
 
     if (!this.lastAcc) {
@@ -47,10 +50,15 @@ export class BellowsController {
     const dy = acc.y - this.lastAcc.y;
     const dz = acc.z - this.lastAcc.z;
 
-    const jerk = Math.sqrt(dx * dx + dy * dy + dz * dz);
+    const rawJerk = Math.sqrt(dx * dx + dy * dy + dz * dz);
+
+    // Dead zone — ignore sensor noise when phone is still
+    const DEAD_ZONE = 0.4;
+    this.jerk = rawJerk < DEAD_ZONE ? 0 : rawJerk;
+    this.rawAcc = this.jerk === 0 ? this.rawAcc : { x: acc.x, y: acc.y, z: acc.z };
 
     // Aggressive mapping — small tilts register clearly
-    const target = Math.min(1, (jerk * this.sensitivity) / 10);
+    const target = Math.min(1, (this.jerk * this.sensitivity) / 10);
 
     // Fast attack, moderate release
     if (target > this.pressure) {

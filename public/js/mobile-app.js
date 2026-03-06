@@ -150,14 +150,31 @@ function init() {
     audio = new AudioEngine();
     audio.init();
 
+    const ax = document.getElementById('ax');
+    const ay = document.getElementById('ay');
+    const az = document.getElementById('az');
+    const aj = document.getElementById('aj');
+    const ap = document.getElementById('ap');
+
     bellows = new BellowsController((p) => {
       audio.setBellows(p);
       bfill.style.width = `${p * 100}%`;
       bpct.textContent = `${Math.round(p * 100)}%`;
+      ax.textContent = bellows.rawAcc.x.toFixed(2);
+      ay.textContent = bellows.rawAcc.y.toFixed(2);
+      az.textContent = bellows.rawAcc.z.toFixed(2);
+      aj.textContent = bellows.jerk.toFixed(2);
+      ap.textContent = p.toFixed(3);
     });
 
-    try { await bellows.start(); }
-    catch { bellows.setManual(0.7); }
+    try {
+      await bellows.start();
+      ap.textContent = 'LIVE';
+    } catch (err) {
+      ap.textContent = 'FAIL';
+      aj.textContent = err.message || 'no sensor';
+      bellows.setManual(0.7);
+    }
 
     setupTouch();
 
