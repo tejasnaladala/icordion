@@ -1,4 +1,4 @@
-# iPhone Accordion
+# icordion
 
 Turn your iPhone into a virtual accordion. Tilt the phone to work the bellows, tap the keys to play notes.
 
