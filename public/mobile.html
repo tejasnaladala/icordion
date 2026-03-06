@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <title>Accordion</title>
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body class="mobile-body">
+  <!-- Start screen - needed for audio context + motion permission -->
+  <div id="start-screen" class="start-screen">
+    <div class="start-content">
+      <div class="start-icon">🪗</div>
+      <h1>iPhone Accordion</h1>
+      <p>Tilt your phone to control the bellows.<br>Tap the buttons to play notes.</p>
+      <button id="start-btn" class="start-btn">Start Playing</button>
+      <div id="room-join" class="room-join">
+        <p>Connect to Dashboard:</p>
+        <input type="text" id="room-code-input" class="room-input" placeholder="Room Code" maxlength="4" autocapitalize="characters">
+        <button id="join-btn" class="join-btn">Join</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Main accordion interface -->
+  <div id="accordion-ui" class="accordion-ui hidden">
+    <!-- Bellows indicator -->
+    <div class="bellows-section">
+      <div class="bellows-label">BELLOWS</div>
+      <div class="bellows-track">
+        <div id="bellows-fill" class="bellows-fill"></div>
+      </div>
+      <div id="connection-status" class="connection-dot disconnected"></div>
+    </div>
+
+    <!-- Treble buttons -->
+    <div class="keys-section">
+      <div class="key-row sharps-row" id="sharps-row"></div>
+      <div class="key-row naturals-row" id="naturals-row-1"></div>
+      <div class="key-row sharps-row" id="sharps-row-2"></div>
+      <div class="key-row naturals-row" id="naturals-row-2"></div>
+    </div>
+
+    <!-- Bass buttons -->
+    <div class="bass-section">
+      <div class="bass-label">BASS</div>
+      <div class="bass-row" id="bass-row"></div>
+    </div>
+  </div>
+
+  <script type="module" src="/js/mobile-app.js"></script>
+</body>
+</html>
