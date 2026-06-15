@@ -1,0 +1,31 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  smoke:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Syntax check
+        run: node --check server.js
+
+      - name: Boot server and verify it serves
+        run: |
+          node server.js &
+          SERVER_PID=$!
+          sleep 3
+          curl -sf -o /dev/null http://localhost:3000/ && echo "http 3000 responded"
+          curl -skf -o /dev/null https://localhost:3443/ && echo "https 3443 responded"
+          kill $SERVER_PID

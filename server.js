@@ -63,5 +63,10 @@ try {
     console.log(`  > (tap Advanced > Continue on the cert warning)\n`);
   });
 } catch (e) {
-  console.log(`  > https not available (openssl missing?) - accelerometer wont work on ios\n`);
+  console.log(`  > https not available - the accelerometer wont work on ios`);
+  console.log(`  > cert generation needs openssl on PATH`);
+  if (process.platform === 'win32') {
+    console.log(`  > on windows: install Git for Windows (bundles openssl) or run "choco install openssl"`);
+  }
+  console.log(`  > http on port ${HTTP_PORT} still works for the ui\n`);
 }
